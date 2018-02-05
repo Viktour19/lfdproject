@@ -1,7 +1,10 @@
+//controllerinterface.c
+
 
 //todo
 //validation
 //memory
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -106,7 +109,7 @@ void goHome(int numberOfServos)
     strcat(commandbuilder, temp);  
     
     sprintf(command, "echo \"%s\" > %s", commandbuilder, PORT);
-    printf(commandbuilder);
+    // printf(commandbuilder);
     system(command);
     sleep(DEFAULT_SLEEP_TIME);
     
@@ -197,6 +200,7 @@ void executeCommand(char *command)
         char execcommand[sizeof(command) + 20];
 
         sprintf(execcommand, "echo \"%s\" > %s", command, PORT);
+        
         system(execcommand);
     }
 }

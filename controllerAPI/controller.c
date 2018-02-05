@@ -1,3 +1,5 @@
+//controller.c
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,7 +15,10 @@
 #define D1       70     // Base height to X/Y plane  
 #define A3       146.0  // Shoulder-to-elbow "bone"  
 #define A4       187.0  // Elbow-to-wrist "bone"  
-#define EZ  100         // Gripper length,  
+#define EZ  100         // Gripper length
+#define MIN_PW 750 //lowest pulse width
+#define MAX_PW 2250 //highest pulsewidth
+#define DEG_PW 0.09 //degrees to pulse width conversation factor
 
 
 int zeroOffset[7];
@@ -45,6 +50,15 @@ int* getJointPositions(float x, float y, float z, float pitch_angle_d, float rol
 
     hum_sq = A3 * A3;
     uln_sq = A4 * A4;
+
+    /* the servo angles corresponding to joint angles of zero */
+    
+    zeroOffset[1] = 90;
+    zeroOffset[2] = 140; 
+    zeroOffset[3] = 90;
+    zeroOffset[4] = 90;
+    zeroOffset[5] = 90;
+    zeroOffset[6] = 0;
     
     //grip angle in radians for use in calculations
     float pitch_angle_r = radians(pitch_angle_d);    
@@ -159,51 +173,39 @@ int* getJointPositions(float x, float y, float z, float pitch_angle_d, float rol
 
 #endif 
 
-    // If any servo ranges are exceeded, return an error
-    //if (bas_pos < BAS_MIN || bas_pos > BAS_MAX || shl_pos < SHL_MIN || shl_pos > SHL_MAX || elb_pos < ELB_MIN || elb_pos > ELB_MAX || wri_pos < WRI_MIN || wri_pos > WRI_MAX)
-    //     return NULL;
+    //convert positions in degrees to pulse width (0.09 degrees per unit pulse width)
+
+    positions[0] = (int) (bas_pos / DEG_PW);
+    positions[1] = (int) (shl_pos / DEG_PW);
+    positions[2] = (int) (elb_pos / DEG_PW);
+    positions[3] = (int) (wri_pitch_pos / DEG_PW);
+    positions[4] = (int) (wri_roll_pos / DEG_PW);
     
-    // Position the servos
-    /*Bas_Servo.writeMicroseconds(deg_to_us(bas_pos));
-    Shl_Servo.writeMicroseconds(deg_to_us(shl_pos));
-    Elb_Servo.writeMicroseconds(deg_to_us(elb_pos));
-    Wri_Servo.writeMicroseconds(deg_to_us(wri_pitch_pos));
-    Wro_Servo.writeMicroseconds(deg_to_us(wri_roll_pos));
-    Gri_Servo.writeMicroseconds(deg_to_us(0));  // open
-    */
+    //scale pw to be within range
 
-    /* The rate is used to determine the delay period when iteratively writing intermediate servo positions  */
-     /* between the current and the target value.  The interval is computed as 10*(10-rate) ms.               */
-    /* Thus, a rate of 5 implies a delay of 50 ms between successive servo commands.                         */
- 
-    // actuateServo(1, bas_pos,       5);  
-    // actuateServo(2, shl_pos,       5);  
-    // actuateServo(3, elb_pos,       5);  
-    // actuateServo(4, wri_pitch_pos, 9);  
-    // actuateServo(5, wri_roll_pos,  9); 
-
-    positions[0] = (int) bas_pos;
-    positions[1] = (int) shl_pos;
-    positions[2] = (int) elb_pos;
-    positions[3] = (int) wri_pitch_pos;
-    positions[4] = (int) wri_roll_pos;
+    positions[0] = positions[0] + MIN_PW;
+    positions[1] = positions[1] + MIN_PW;
+    positions[2] = positions[2] + MIN_PW;
+    positions[3] = positions[3] + MIN_PW;
+    positions[4] = positions[4] + MIN_PW;
     
     return positions;
 }
 
-void grasp(int d, int rate) {
+int grasp(int d) {
 
-  /* the grippers are approximately 30mm apart when open at servo angle of 0
-   * and 0mm apart when closed at servo angle of 140
-   * Thus, we close to approximately d mm with a servo angle of 140-4.7d
+  /* the grippers are approximately 30mm apart when open at servo angle of 0 
+   * and 0mm apart when closed at servo angle of 140 (500 PW - 1555 PW )
+   * Thus, we close to approximately d mm with a servo angle of 140-4.7d 
+   * or PW of 1553-35.2d
    */
   
-   int angle;
+   int pw, angle;
 
    angle = (int) (150 - 4.6 * (float) d);
-   angle = 120;
-//    actuateServo(6, angle, rate);
-   
+   pw =  (int) (500 + 35.17 * (float) d);
+
+   return pw;
 }
 
 
@@ -214,7 +216,15 @@ int main() {
 
     initializeControllerWithSpeed(PORT, BAUD, 300);
 
-    // executeCommand("#0P2000 #1P2000 <CR>");
+    int* poss = getJointPositions(0, 187.0, 220.0, -90, 0);
+
+    printf("%d %d %d %d %d", poss[0], poss[1], poss[2], poss[3], poss[4]);
+
+    char command[100];
+    
+    sprintf(command, "#0P%d #1P%d #3P%d<CR>", poss[0], poss[1], poss[2]);
+
+    executeCommand(command);
     
     //executeCommand("#0P750 #1P2000 <CR>");
 
@@ -224,15 +234,5 @@ int main() {
     
     //  goHome(7);
 
-    zeroOffset[1] = 0;
-    zeroOffset[2] = 0; 
-    zeroOffset[3] = 0;
-    zeroOffset[4] = 0;
-    zeroOffset[5] = 0;
-    zeroOffset[6] = 0;
-
-    int* poss = getJointPositions(0, 187.0, 220.0, -90, 0); 
-
-    printf("%d %d %d %d %d", poss[0], poss[1], poss[2], poss[3], poss[4]);
 }
 
