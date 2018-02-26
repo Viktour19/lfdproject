@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
+#include <math.h>
 #include "approxmatch.h"
 
 #define EVENTLEN 27
@@ -160,7 +161,7 @@ void punish(Hypothesis hyp, int value)
 
 int approxmatch(char** a, char** b)
 {
-    return 1;
+    return exactmatch(a, b);
 }
 
 int hypMatch(Hypothesis hyp, char** sequence)
@@ -190,8 +191,10 @@ int hypMatch(Hypothesis hyp, char** sequence)
         
         }
     } 
+
     else return 0;
 
+    return 0;
 }
 
 void getConfScores(char** sequence, int* hs)
@@ -228,6 +231,7 @@ void clearHypotheses()
 
 void train(char** sequence, int startIndex, int stopIndex)
 {
+    init();
     int seqlen = getEventSeqLen(sequence);
 
     if(seqlen<= stopIndex || startIndex >= seqlen || startIndex > stopIndex) return;
@@ -236,8 +240,9 @@ void train(char** sequence, int startIndex, int stopIndex)
     {
         char** sub = subsequence(sequence, 0, i);
         char* t = sequence[i];
-        int* hs;
-        getConfScores(sub, hs);
+        int* hs = (int*) malloc(hypothesisCount);
+
+        getConfScores(sub, hs); //gets a confidence score for every hypothesis
         int hs_sz = sizeof(hs);
 
         Hypothesis maxh;
@@ -278,9 +283,26 @@ void train(char** sequence, int startIndex, int stopIndex)
         if(correct)
         {
             if(bestCorrect.id == 0) newh = grow_sub(sub, t);
-            else newh = grow(sub, bestCorrect);
+            else newh = grow(sub, bestCorrect); //hypothesis library is updated in grow
         }
     }
 
 }
 
+
+
+int main()
+{
+    char** sequence;
+
+    sequence = malloc(10 * sizeof(char*));
+    
+    for (int i = 0; i < 10; i++)
+
+        sequence[i] = malloc((2) * sizeof(char));
+
+    *sequence = "addaddabbd";
+    train(sequence, 0, 8 );
+
+    return 0;
+}
