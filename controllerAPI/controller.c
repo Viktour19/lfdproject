@@ -5,7 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
-#include "controllerinterface.h"
+#include "controllerInterface.h"
 
 
 //inverse kinematics code authored by Prof. Vernon
@@ -211,26 +211,39 @@ int grasp(int d) {
 
 int main() {
     
-    char PORT[13] = "\\\\.\\COM9"; // USB Port ID
+    // char PORT[13] = "\\\\.\\COM9"; // USB Port ID
+
+    char PORT[13] = "/dev/ttyUSB0"; // USB Port ID    
+
     char BAUD[6] = "9600"; // Baud Rate
 
     initializeControllerWithSpeed(PORT, BAUD, 300);
 
     int* poss = getJointPositions(0, 187.0, 220.0, -90, 0);
 
-    printf("%d %d %d %d %d", poss[0], poss[1], poss[2], poss[3], poss[4]);
+    printf("%d %d %d %d %d \n", poss[0], poss[1], poss[2], poss[3], poss[4]);
 
     char command[100];
-    
-    sprintf(command, "#0P%d #1P%d #3P%d<CR>", poss[0], poss[1], poss[2]);
+
+    sprintf(command, "#0P%d <CR>", poss[0]);
 
     executeCommand(command);
-    
-    //executeCommand("#0P750 #1P2000 <CR>");
 
-    // executeCommand("#0P1500 #1P2000 #3P2000  S300 <CR>");
-    
-    // executeCommand("#0P2000 #1P1500 #3P1500 #4P1500 #5P1500 #6P1500 S300");
+    sprintf(command, "#1P%d <CR>", poss[1]);
+
+    executeCommand(command);
+
+    sprintf(command, "#2P%d <CR>", poss[2]);
+
+    executeCommand(command);
+
+    sprintf(command, "#3P%d <CR>", poss[3]);
+
+    executeCommand(command);
+
+    sprintf(command, "#4P%d <CR>", poss[4]);
+
+    executeCommand(command);
     
     //  goHome(7);
 
