@@ -158,7 +158,6 @@ void punish(Hypothesis hyp, int value)
     }
 }
 
-
 int approxmatch(char** a, char** b)
 {
     return exactmatch(a, b);
@@ -290,19 +289,59 @@ void train(char** sequence, int startIndex, int stopIndex)
 }
 
 
+Hypothesis selectt(char** seq)
+{
+    int* scores = (int*) malloc(hypothesisCount);
+    for(int i=0; i< hypothesisCount; i++)
+    {
+        scores[i] =  hypMatch(hypotheses[i], seq);
+    }
+    int max = 0;
+    int index = 0;
+    for(int i=0; i< hypothesisCount; i++)
+    {
+        if(max < scores[i]) {
+            max = scores[i];
+            index = i;
+        } 
+    }
+    Hypothesis nullHyp;
+    nullHyp.id = 0;
+
+    return scores[index] > 0 ? hypotheses[index] : nullHyp; 
+}
+
+char* predict(char** seq)
+{
+    Hypothesis h = selectt(seq);
+    return h.rhs;
+}
+
+
 
 int main()
 {
     char** sequence;
+    char** psequence;
+    
 
     sequence = malloc(10 * sizeof(char*));
-    
+    psequence = malloc(5 * sizeof(char*));
+
     for (int i = 0; i < 10; i++)
 
         sequence[i] = malloc((2) * sizeof(char));
 
+    for (int i = 0; i < 5; i++)
+
+        psequence[i] = malloc((2) * sizeof(char));
+
     *sequence = "addaddabbd";
     train(sequence, 0, 8 );
 
+    *psequence = "addad";
+    
+    printf("%s", predict(psequence));
+    
     return 0;
 }
