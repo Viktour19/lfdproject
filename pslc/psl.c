@@ -7,22 +7,61 @@
 #include "approxmatch.h"
 
 #define EVENTLEN 27
-#define MAXEVENT 200
+#define MAXEVENT 2000
 #define MAXHYP 1000
 #define VTFACTOR 2.0
 
 // #define NULL ((void *)0)
 
 #ifndef max
-#define max(a,b) (((a) > (b)) ? (a) : (b))
+#define max(a, b) (((a) > (b)) ? (a) : (b))
 #endif
 
+//lhs represents the hypothesis body and rhs represents the head in PSL nomenclature
+//misses and hits are used to calculate the support and confidence of an hypothesis
+//id = 0 means the hypothesis is NULL (or empty). as C doesn't support assigning NULL to an hypothesis.
 
-typedef struct {
+typedef struct
+{
+    signed char diffX;
+    signed char diffY;
+    signed char diffZ;
+    signed char diffangle;
+
+} Observation;
+
+typedef struct
+{
+    signed char deltaX;
+    signed char deltaY;
+    signed char deltaZ;
+    signed char deltaangle;
+    signed char grasp;
+
+} Action;
+
+typedef union {
+    Observation observation;
+    Action action;
+
+} EventUnion;
+
+//eventtype 1 - Action, 2 - Observation, 0 - notdefined
+
+typedef struct Event
+{
+    EventUnion event;
+    int eventtype;
+    struct Event *next;
+
+} Event_t;
+
+typedef struct
+{
 
     int id;
-    char** lhs;
-    char* rhs;
+    Event_t *lhs;
+    Event_t *rhs;
     int misses;
     int hits;
 
@@ -31,68 +70,129 @@ typedef struct {
 int hypothesisCount = 0;
 Hypothesis hypotheses[MAXHYP];
 
-
 void init()
 {
-    for(int i= 0; i< MAXHYP; i++)
+    //initialize the hypotheses library.
+    //instantiate MAXHYP hypotheses and allocate memory for the body and head of each.
+
+    for (int i = 0; i < MAXHYP; i++)
     {
         hypotheses[i].hits = 1;
-        hypotheses[i].id = i+1;
+        hypotheses[i].id = -1;
+
+        hypotheses[i].lhs = malloc(sizeof(Event_t));
+        hypotheses[i].rhs = malloc(sizeof(Event_t));
+
+        hypotheses[i].lhs->eventtype = 0;
+        hypotheses[i].lhs->next = NULL;
+
+        hypotheses[i].rhs->eventtype = 0;
+        hypotheses[i].rhs->next = NULL;
+    }
+}
+
+Hypothesis newHyp()
+{
+    Hypothesis hyp;
+
+    hyp.id = -1;
+    hyp.hits = 1;
+    hyp.misses = 0;
+    hyp.lhs =  malloc(sizeof(Event_t));
+    hyp.rhs =  malloc(sizeof(Event_t));
+
+    return hyp;
+}
+
+void print_list(Event_t *head)
+{
+
+    Event_t *current = head;
+
+    while (current != NULL)
+    {
+
+        printf("%d\n", current->eventtype);
+        current = current->next;
+    }
+}
+
+void push(Event_t * head, EventUnion val, int eventtype)
+{
+    Event_t *current = head;
     
-        hypotheses[i].lhs = (char**) calloc(EVENTLEN, sizeof(char*));
+    if(current->next == NULL && current->eventtype == 0)
+    {
+        current->eventtype = eventtype;
+        current->event = val;
+        return;
+    }
 
-        for (int j = 0; j < EVENTLEN; j++ )
+    while (current->next != NULL)
+    {
+        current = current->next;
+    }
+
+    /* now we can add a new variable */
+    current->next = malloc(sizeof(Event_t));
+    current->next->event = val;
+    current->next->eventtype = eventtype;
+    current->next->next = NULL;
+}
+
+int getEventSeqLen(Event_t *sequence)
+{
+
+    Event_t *head = sequence;
+    int ct = 0;
+
+    while (head != NULL)
+    {
+        head = head->next;
+        ct++;
+    }
+
+    return ct;
+}
+
+Event_t * get_by_index(Event_t *head, int n)
+{
+
+    int i = 0;
+
+    Event_t *current = head;
+    if (n == 0)
+    {
+        return head;
+    }
+
+    for (i = 0; i < n; i++)
+    {
+        if (current->next == NULL)
         {
-            hypotheses[i].lhs[j] = (char*) calloc(MAXEVENT, sizeof(char));
+            return NULL;
         }
-
-        hypotheses[i].rhs = (char*) calloc(MAXEVENT, sizeof(char));
-    }
-}
-
-char* strdup(const char* str)
-{
-      char* newstr = (char*) malloc( strlen( str) + 1);
-
-      if (newstr) {
-          strcpy( newstr, str);
-      }
-
-      return newstr;
-}
-
-int getEventSeqLen(char** sequence)
-{
-    if(sequence) return sizeof(sequence)/sizeof(sequence[0]);
-    else return 0;
-}
-
-char** twodstrcpy(char** tosequence, char** fromsequence)
-{
-    int len = getEventSeqLen(fromsequence);
-
-    for(int i =0; i< len; i++)
-    {
-        strncpy(tosequence[i], fromsequence[i], EVENTLEN);
+        current = current->next;
     }
 
-    return tosequence;
+    return current;
 }
 
-char** subsequence(char** sequence, int startIndex, int stopIndex)
+Event_t * subsequence(Event_t *sequence, int startIndex, int stopIndex)
 {
-    int sz = (stopIndex - startIndex ) + 1;
+    Event_t * sub = NULL;
+    sub = malloc(sizeof(Event_t));
 
-    char **sub = (char**) calloc(sz, sizeof(char*));
-
-    for (int i = 0; i < sz; i++ )
+    if ((stopIndex > startIndex) && (getEventSeqLen(sequence) >= stopIndex))
     {
-        sub[i] = (char*) calloc(MAXEVENT, sizeof(char));
-    }
+        int sz = stopIndex - startIndex ;
+        Event_t * current = get_by_index(sequence, startIndex);
 
-    for(size_t i =0; i < sz; i ++)
-    {
-         strcpy(sub[i], sequence[startIndex + i]);
+        for (int i = 0; i < sz; i++)
+        {   
+            push(sub, current->event, current->eventtype);
+            current = current->next;
+        }
     }
 
     return sub;
@@ -103,170 +203,286 @@ int getVtFactor(Hypothesis hyp)
     int l = getEventSeqLen(hyp.lhs);
     int f = floor(l * VTFACTOR);
 
-    return max(l +1, f);
-
+    return max(l + 1, f);
 }
 
-Hypothesis grow(char** sequence, Hypothesis parent)
+Hypothesis grow(Event_t *sequence, Hypothesis parent)
 {
     int slen = getEventSeqLen(sequence);
 
-    twodstrcpy(hypotheses[hypothesisCount].lhs, subsequence(sequence, slen -  getVtFactor(parent), slen));
-    strcpy(hypotheses[hypothesisCount].rhs, parent.rhs);
-    
-    hypothesisCount += 1;
+    hypotheses[hypothesisCount].lhs = subsequence(sequence, slen - getVtFactor(parent), slen);
 
+    hypotheses[hypothesisCount].rhs = parent.rhs;
+
+    hypotheses[hypothesisCount].id = hypothesisCount;
+
+    hypothesisCount += 1;
     return hypotheses[hypothesisCount - 1];
 }
 
-Hypothesis grow_sub(char** sequence, char* parent)
+Hypothesis grow_sub(Event_t *sequence, Event_t *parent)
 {
+    //if PSL failed to predict
+
     int slen = getEventSeqLen(sequence);
 
-    Hypothesis h;
-    twodstrcpy(h.lhs ,subsequence(sequence, slen-1, slen)); //add the last event sequence
+    Hypothesis h = newHyp();
+
+    h.lhs = subsequence(sequence, slen - 1, slen); //add the last event sequence
+    h.rhs = parent;
 
     hypotheses[hypothesisCount] = h;
-    
-    hypothesisCount += 1;
+    hypotheses[hypothesisCount].id = hypothesisCount;
 
+    hypothesisCount += 1;
     return hypotheses[hypothesisCount - 1];
 }
 
-
-int conf(Hypothesis hyp)
+double conf(int hypIndex)
 {
-    return getEventSeqLen(hyp.lhs) * hyp.hits / (hyp.hits+hyp.misses);
+    return (double) (getEventSeqLen(hypotheses[hypIndex].lhs) * hypotheses[hypIndex].hits) / (double)(hypotheses[hypIndex].hits + hypotheses[hypIndex].misses);
 }
 
-int support(Hypothesis hyp)
+int support(int hypIndex)
 {
-    return hyp.misses + hyp.hits;
+    return hypotheses[hypIndex].misses + hypotheses[hypIndex].hits;
 }
 
-void reward(Hypothesis hyp, int value)
+void reward(int hypIndex, int value)
 {
-    if(value){
-        hyp.hits += value;
-    }
-}
-
-void punish(Hypothesis hyp, int value)
-{
-    if(value){
-        hyp.misses += value;
-    }
-}
-
-int approxmatch(char** a, char** b)
-{
-    return exactmatch(a, b);
-}
-
-int hypMatch(Hypothesis hyp, char** sequence)
-{
-    int seqlen = getEventSeqLen(sequence);
-    int hypLhsLen = getEventSeqLen(hyp.lhs);
-
-    if(sequence)
+    if (value)
     {
-        if(seqlen == 0 || seqlen > hypLhsLen) return conf(hyp);
-        
-        else{
-            
-            // char subsequence[seqlen][EVENTLEN];
-            char** subsequence = (char**) calloc(seqlen, sizeof(char*));
+        hypotheses[hypIndex].hits += value;
+    }
+}
 
-            for (int i = 0; i < seqlen; i++ )
-            {
-                subsequence[i] = (char*) calloc(EVENTLEN, sizeof(char));
-                strcpy(subsequence[i], hyp.lhs[i]);
-            }
+void punish(int hypIndex, int value)
+{
+    //punish the hypothesis by increasing the value of its misses
 
-            if(approxmatch(subsequence, sequence)) //should have some heuristic
-            {
-                return conf(hyp) / seqlen * hypLhsLen;
-            }
-        
+    if (value)
+    {
+        hypotheses[hypIndex].misses += value;
+    }
+}
+
+int approxmatch(Event_t *a, Event_t *b)
+{
+    int a_len = getEventSeqLen(a);
+    int b_len = getEventSeqLen(b);
+
+    char *a_ = (char *)calloc(5 * a_len, sizeof(char));
+    char *b_ = (char *)calloc(5 * b_len, sizeof(char));
+
+    Event_t *current = a;
+    int i = 0;
+
+    while (current != NULL)
+    {
+        if (current->eventtype == 1)
+        {
+            a_[i++] = current->event.action.deltaX;
+            a_[i++] = current->event.action.deltaY;
+            a_[i++] = current->event.action.deltaZ;
+            a_[i++] = current->event.action.deltaangle;
+            a_[i++] = current->event.action.grasp;
         }
-    } 
+        else if (current->eventtype == 2)
+        {
+            a_[i++] = current->event.observation.diffX;
+            a_[i++] = current->event.observation.diffY;
+            a_[i++] = current->event.observation.diffZ;
+            a_[i++] = current->event.observation.diffangle;
+        }
 
-    else return 0;
+        current = current->next;
+    }
+
+    current = b;
+    i = 0;
+
+    while (current != NULL)
+    {
+        if (current->eventtype == 1)
+        {
+            b_[i++] = current->event.action.deltaX;
+            b_[i++] = current->event.action.deltaY;
+            b_[i++] = current->event.action.deltaZ;
+            b_[i++] = current->event.action.deltaangle;
+            b_[i++] = current->event.action.grasp;
+        }
+        else if (current->eventtype == 2)
+        {
+            b_[i++] = current->event.observation.diffX;
+            b_[i++] = current->event.observation.diffY;
+            b_[i++] = current->event.observation.diffZ;
+            b_[i++] = current->event.observation.diffangle;
+        }
+
+        current = current->next;
+    }
+
+    return exactmatch(a_, b_);
+}
+
+double hypMatch(int hypIndex, Event_t *sequence)
+{
+    //match the lhs of the hypothesis with a given sequence returning a certain confidence score
+    //adjusted for the length of the both sequences
+
+    int seqlen = getEventSeqLen(sequence);
+    int hypLhsLen = getEventSeqLen(hypotheses[hypIndex].lhs);
+
+    if (sequence)
+    {
+        if (seqlen == 0 || seqlen > hypLhsLen)
+            return conf(hypIndex);
+
+        else
+        {
+            int a = approxmatch(hypotheses[hypIndex].lhs, sequence);
+            if (a == 0) //should have some heuristic
+            {
+                double z = conf(hypIndex);
+                z = z / seqlen * hypLhsLen;
+                return z;
+            }
+        }
+    }
+
+    else
+        return 0;
 
     return 0;
 }
 
-void getConfScores(char** sequence, int* hs)
-{   
-    // int scores[hypothesisCount];
-    int* scores = (int*) malloc(hypothesisCount);
+Hypothesis selectHyp(Event_t *seq)
+{
+    double scores [hypothesisCount];
     
-    for(int i =0; i<hypothesisCount; i++)
+    for (int i = 0; i < hypothesisCount; i++)
     {
-        scores[i] = hypMatch(hypotheses[i], sequence);
+        scores[i] = hypMatch(i, seq);
+    }
+    int max = 0;
+    int index = 0;
+    for (int i = 0; i < hypothesisCount; i++)
+    {
+        if (max < scores[i])
+        {
+            max = scores[i];
+            index = i;
+        }
+    }
+    Hypothesis nullHyp = newHyp();
+
+    return scores[index] > 0.0 ? hypotheses[index] : nullHyp;
+}
+
+void getConfScores(Event_t *sequence, double hs[])
+{    
+    if (hypothesisCount == 0)
+        return NULL;
+
+    // int scores[hypothesisCount];
+
+    for (int i = 0; i < hypothesisCount; i++)
+    {
+        double a = hypMatch(i, sequence);
+        hs[i] = a;
     }
 
-    hs = scores;
+    // return scores;
 }
 
 void clearHypotheses()
 {
-    for(size_t i =0; i< MAXHYP; i++)
+    for (size_t i = 0; i < MAXHYP; i++)
     {
-        hypotheses[i].id = 0;
-        
-        for(size_t j = 0; j < getEventSeqLen(hypotheses[i].lhs); j++)
+        hypotheses[i].id = -1;
+
+        for (size_t j = 0; j < getEventSeqLen(hypotheses[i].lhs); j++)
         {
-            free(hypotheses[i].lhs[j]);            
+            hypotheses[i].lhs[j].eventtype = 0;
         }
 
-        free(hypotheses[i].rhs);
-
+        hypotheses[i].rhs->eventtype = 0;
         hypotheses[i].misses = 0;
         hypotheses[i].hits = 1;
-
-    } 
+    }
 }
 
-void train(char** sequence, int startIndex, int stopIndex)
+int eventcompare(Event_t *a, Event_t *b)
+{
+    if (a->eventtype != b->eventtype)
+        return -1;
+    if (a->eventtype == 1)
+    {
+        if (a->event.action.deltaangle == b->event.action.deltaangle &&
+            a->event.action.deltaX == b->event.action.deltaX && a->event.action.deltaY == b->event.action.deltaY &&
+            a->event.action.deltaZ == b->event.action.deltaZ)
+            return 0;
+        else
+            return -1;
+    }
+    else
+    {
+        if (a->event.observation.diffangle == b->event.observation.diffangle &&
+            a->event.observation.diffX == b->event.observation.diffX && a->event.observation.diffY == b->event.observation.diffY &&
+            a->event.observation.diffZ == b->event.observation.diffZ)
+            return 0;
+        else
+            return -1;
+    }
+}
+
+void train(Event_t *sequence, int startIndex, int stopIndex)
 {
     init();
     int seqlen = getEventSeqLen(sequence);
 
-    if(seqlen<= stopIndex || startIndex >= seqlen || startIndex > stopIndex) return;
+    if(seqlen < 2) return;
 
-    for(int i =startIndex; i<stopIndex; i++)
+    if (seqlen <= stopIndex || startIndex >= seqlen || startIndex > stopIndex)
+        return;
+
+    if(startIndex == 0) startIndex = 1;
+
+    for (int i = startIndex; i < stopIndex + 1; i++)
     {
-        char** sub = subsequence(sequence, 0, i);
-        char* t = sequence[i];
-        int* hs = (int*) malloc(hypothesisCount);
+        Event_t * sub = subsequence(sequence, 0, i);
+        Event_t * t = subsequence(sequence, i, i+1);
+
+        double hs [hypothesisCount];
 
         getConfScores(sub, hs); //gets a confidence score for every hypothesis
-        int hs_sz = sizeof(hs);
 
-        Hypothesis maxh;
-		int maxc = -1;
-		Hypothesis bestCorrect;
+        int hs_sz =  hs_sz = sizeof(hs) / sizeof(double);
+
+        Hypothesis maxh = newHyp();
         
-        for(int j = 0; j< hs_sz; j ++)
+        double maxc = -1.0;
+        Hypothesis bestCorrect = newHyp();
+ 
+        for (int j = 0; j < hs_sz; j++)
         {
-            int conf =   hs[j];
+            double conf = hs[j];
 
-            if(conf > 0)
+            if (conf > 0.0)
             {
-                Hypothesis hyp =  hypotheses[j];
+                Hypothesis hyp = hypotheses[j];
 
-                if(maxc < conf)
+                if (maxc < conf)
                 {
                     maxc = conf;
                     maxh = hyp;
                 }
 
-                if(strcmp(hyp.rhs, t) == 0)
+                if (eventcompare(hyp.rhs, t) == 0)
                 {
-                    reward(hyp, 1);
+                    reward(j, 1);
 
-                    if(bestCorrect.id == 0 || getEventSeqLen(bestCorrect.lhs) < getEventSeqLen(hyp.lhs))
+                    if (bestCorrect.id == -1 || getEventSeqLen(bestCorrect.lhs) < getEventSeqLen(hyp.lhs))
                     {
                         bestCorrect = hyp;
                     }
@@ -274,74 +490,155 @@ void train(char** sequence, int startIndex, int stopIndex)
             }
         }
 
-        
-        int correct = (strcmp(maxh.rhs, t) == 0);
+        //if the rhs sugessted doesn't match the next event in the sequence, punish the hypothesis
 
-        if(maxh.id != 0 && !correct) punish(maxh, 1);
-        Hypothesis newh;
-        if(correct)
+        if(maxh.id != -1)
         {
-            if(bestCorrect.id == 0) newh = grow_sub(sub, t);
-            else newh = grow(sub, bestCorrect); //hypothesis library is updated in grow
+            if (eventcompare(maxh.rhs, t) != 0)
+                punish(maxh.id, 1);
         }
-    }
 
+
+        //psl learns only on failure
+        //hypothesis library is updated in grow
+        
+        if (bestCorrect.id == -1)
+            grow_sub(sub, t);
+        else
+            grow(sub, bestCorrect);
+
+    }
 }
 
-
-Hypothesis selectt(char** seq)
+Event_t *predict(Event_t *seq)
 {
-    int* scores = (int*) malloc(hypothesisCount);
-    for(int i=0; i< hypothesisCount; i++)
-    {
-        scores[i] =  hypMatch(hypotheses[i], seq);
-    }
-    int max = 0;
-    int index = 0;
-    for(int i=0; i< hypothesisCount; i++)
-    {
-        if(max < scores[i]) {
-            max = scores[i];
-            index = i;
-        } 
-    }
-    Hypothesis nullHyp;
-    nullHyp.id = 0;
-
-    return scores[index] > 0 ? hypotheses[index] : nullHyp; 
-}
-
-char* predict(char** seq)
-{
-    Hypothesis h = selectt(seq);
+    Hypothesis h = selectHyp(seq);
     return h.rhs;
 }
 
-
-
 int main()
 {
-    char** sequence;
-    char** psequence;
+
+    Event_t * events = NULL;
+    events = malloc(sizeof(Event_t));
+
+    EventUnion e;
+
+    e.action.deltaangle = 'z';
+    e.action.deltaX = 'z';
+    e.action.deltaY = 'z';
+    e.action.deltaZ = 'z';
+    e.action.grasp = 'z';
+
+    push(events, e, 1);
+
+    e.observation.diffZ = 'a';
+    e.observation.diffY = 'a';
+    e.observation.diffX = 'a';
+    e.observation.diffangle = 'a';
+
+    push(events, e, 2);
+
+    e.action.deltaangle = 'b';
+    e.action.deltaX = 'b';
+    e.action.deltaY = 'b';
+    e.action.deltaZ = 'b';
+    e.action.grasp = 'b';
+
+    push(events, e, 1);
+
+    e.observation.diffZ = 'b';
+    e.observation.diffY = 'b';
+    e.observation.diffX = 'b';
+    e.observation.diffangle = 'b';
+
+    push(events, e, 2);
+
+    e.action.deltaangle = 'z';
+    e.action.deltaX = 'z';
+    e.action.deltaY = 'z';
+    e.action.deltaZ = 'z';
+    e.action.grasp = 'z';
+
+    push(events, e, 1);
+
+    e.observation.diffZ = 'a';
+    e.observation.diffY = 'a';
+    e.observation.diffX = 'a';
+    e.observation.diffangle = 'a';
+
+    push(events, e, 2);
+
+    e.action.deltaangle = 'b';
+    e.action.deltaX = 'b';
+    e.action.deltaY = 'b';
+    e.action.deltaZ = 'b';
+    e.action.grasp = 'b';
+
+    push(events, e, 1);
+
+    e.observation.diffZ = 'b';
+    e.observation.diffY = 'b';
+    e.observation.diffX = 'b';
+    e.observation.diffangle = 'b';
+
+    push(events, e, 2);
+
+    e.action.deltaangle = 'z';
+    e.action.deltaX = 'z';
+    e.action.deltaY = 'z';
+    e.action.deltaZ = 'z';
+    e.action.grasp = 'z';
+
+    push(events, e, 1);
+
+    e.observation.diffZ = 'a';
+    e.observation.diffY = 'a';
+    e.observation.diffX = 'a';
+    e.observation.diffangle = 'a';
+
+    push(events, e, 2);
+
+    e.action.deltaangle = 'b';
+    e.action.deltaX = 'b';
+    e.action.deltaY = 'b';
+    e.action.deltaZ = 'b';
+    e.action.grasp = 'b';
+
+    push(events, e, 1);
+
+    e.observation.diffZ = 'b';
+    e.observation.diffY = 'b';
+    e.observation.diffX = 'b';
+    e.observation.diffangle = 'b';
+
+    push(events, e, 2);
     
+    train(events, 0, getEventSeqLen(events) - 1);
 
-    sequence = malloc(10 * sizeof(char*));
-    psequence = malloc(5 * sizeof(char*));
 
-    for (int i = 0; i < 10; i++)
+    Event_t * events_ = NULL;
+    events_  = malloc(sizeof(Event_t));
 
-        sequence[i] = malloc((2) * sizeof(char));
+    EventUnion e_;
 
-    for (int i = 0; i < 5; i++)
+    e_.action.deltaangle = 'z';
+    e_.action.deltaX = 'z';
+    e_.action.deltaY = 'z';
+    e_.action.deltaZ = 'z';
+    e_.action.grasp = 'z';
 
-        psequence[i] = malloc((2) * sizeof(char));
+    push(events_, e_, 1);
 
-    *sequence = "addaddabbd";
-    train(sequence, 0, 8 );
+    for(int i = 0; i< 3; i++)
+    {
+        Event_t * pred =  predict(events_);
+        push(events_, pred->event, pred->eventtype);
 
-    *psequence = "addad";
-    
-    printf("%s", predict(psequence));
+    }
+
+    dynamicprogramming("cacd", "bcbacbbb", 1);
     
     return 0;
+
 }
