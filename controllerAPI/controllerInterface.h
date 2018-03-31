@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <math.h>
 
 /** 
  *  intialize the port and baurate global variables
@@ -46,6 +47,8 @@ void goServoHome(int index);
  * @param pw, pulse width
  */
 
+void goHome2(int numberOfServos);
+
 void setServoPW(int index, int pw);
 
 /**
@@ -57,3 +60,10 @@ void execute(char *command);
 
 void executeCommand(int channel, int pos, int speed);
 
+//inverse kinematics
+int *getJointPositions(float x, float y, float z, float pitch_angle_d, float roll_angle_d);
+
+
+void gotoPose(float x, float y, float z, float pitch, float roll);
+
+void grasp(int d);
