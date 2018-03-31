@@ -53,5 +53,7 @@ void setServoPW(int index, int pw);
  * @param command, string to send to device - 
  * #channel Ppulsewidth Sspeed <carriage_return>
  */
-void executeCommand(char *command);
+void execute(char *command);
+
+void executeCommand(int channel, int pos, int speed);
 

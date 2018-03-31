@@ -209,6 +209,7 @@ int grasp(int d) {
 }
 
 
+
 int main() {
     
     // char PORT[13] = "\\\\.\\COM9"; // USB Port ID
@@ -217,34 +218,16 @@ int main() {
 
     char BAUD[6] = "9600"; // Baud Rate
 
-    initializeControllerWithSpeed(PORT, BAUD, 300);
+    int speed = 300;
 
-    int* poss = getJointPositions(0, 187.0, 220.0, -90, 0);
+    initializeControllerWithSpeed(PORT, BAUD, speed);
+
+    int* poss = getJointPositions(10, 160.0, 220.0, -90, 0);
 
     printf("%d %d %d %d %d \n", poss[0], poss[1], poss[2], poss[3], poss[4]);
 
-    char command[100];
+    executeCommand(1, poss[1], speed);
 
-    sprintf(command, "#0P%d <CR>", poss[0]);
-
-    executeCommand(command);
-
-    sprintf(command, "#1P%d <CR>", poss[1]);
-
-    executeCommand(command);
-
-    sprintf(command, "#2P%d <CR>", poss[2]);
-
-    executeCommand(command);
-
-    sprintf(command, "#3P%d <CR>", poss[3]);
-
-    executeCommand(command);
-
-    sprintf(command, "#4P%d <CR>", poss[4]);
-
-    executeCommand(command);
-    
     //  goHome(7);
 
 }
