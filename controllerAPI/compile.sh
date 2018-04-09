@@ -1,7 +1,9 @@
-rm controller
-rm controller.o
+make clean
 
-sudo gcc -c controller.c
-sudo gcc -o controller controller.c controllerInterface.c -lm
+# sudo gcc -c controller.c
+# sudo gcc -o controller controller.c controllerInterface.c -lm
 
+# sudo ./controller
+
+make
 sudo ./controller

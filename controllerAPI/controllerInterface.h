@@ -7,6 +7,10 @@
 #include <unistd.h>
 #include <math.h>
 
+#include <signal.h>
+#include <X11/Xlib.h>
+#include <spnav.h>
+
 /** 
  *  intialize the port and baurate global variables
  *  @param port - port number of the USB serial
@@ -64,6 +68,6 @@ void executeCommand(int channel, int pos, int speed);
 int *getJointPositions(float x, float y, float z, float pitch_angle_d, float roll_angle_d);
 
 
-void gotoPose(float x, float y, float z, float pitch, float roll);
+int gotoPose(float x, float y, float z, float pitch, float roll);
 
 void grasp(int d);
