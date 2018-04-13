@@ -1,11 +1,27 @@
 //controllerinterface.h
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
+
+#include <time.h>
+#include <sys/sysinfo.h>
+#include <sys/stat.h>
+#include <termios.h>
+#include <fcntl.h>
+#include <ctype.h>
+#include <iostream>
+#include <vector>
+
+
+#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/video/video.hpp>
+
 
 #include <signal.h>
 #include <X11/Xlib.h>

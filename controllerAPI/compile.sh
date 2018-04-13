@@ -1,9 +1,9 @@
 make clean
 
-# sudo gcc -c controller.c
-# sudo gcc -o controller controller.c controllerInterface.c -lm
+# sudo gcc -c app.c
+# sudo gcc -o app app.c controllerInterface.c -lm
 
-# sudo ./controller
+# sudo ./app
 
 make
-sudo ./controller
+sudo ./app

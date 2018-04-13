@@ -19,9 +19,8 @@ int getPW(int idx);
 #define MIN_PW 750  //lowest pulse width
 #define MAX_PW 2250 //highest pulsewidth
 
-
-#define MAX(x, y) (((x) > (y)) ? (x) : (y))
-#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+// #define MAX(x, y) (((x) > (y)) ? (x) : (y))
+// #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 char PORT[20];
 char BAUD[6];
@@ -74,9 +73,10 @@ void goHome(int numberOfServos)
 {
     if (numberOfServos > MAX_SERVOS)
     {
-        char message[MESASGE_LENGTH];
+        char * message = new char[MESASGE_LENGTH];
         sprintf(message, "Maximum number of servos is %d", MAX_SERVOS);
         fail(message);
+        delete[] message;
     }
 
     ACTIVE_SERVOS_COUNT = numberOfServos;
@@ -119,9 +119,10 @@ void goHome2(int numberOfServos)
     ACTIVE_SERVOS_COUNT = numberOfServos;
     if (numberOfServos > MAX_SERVOS)
     {
-        char message[MESASGE_LENGTH];
+        char * message = new char[MESASGE_LENGTH];
         sprintf(message, "Maximum number of servos is %d", MAX_SERVOS);
         fail(message);
+        delete[] message;
     }
 
     ACTIVE_SERVOS_COUNT = numberOfServos;
@@ -143,9 +144,10 @@ void goServoHome(int index)
 {
     if (index >= ACTIVE_SERVOS_COUNT)
     {
-        char message[MESASGE_LENGTH];
+        char * message = new char[MESASGE_LENGTH];
         sprintf(message, "Servo not active");
         fail(message);
+        delete[] message;
     }
 
     char commandbuilder[COMMAND_SIZE];
@@ -176,9 +178,10 @@ void setServoPW(int index, int pw)
 {
     if (index >= ACTIVE_SERVOS_COUNT)
     {
-        char message[MESASGE_LENGTH];
+        char * message = new char[MESASGE_LENGTH];
         sprintf(message, "Servo not active");
         fail(message);
+        delete[] message;
     }
 
     index = index + offset;
@@ -186,9 +189,12 @@ void setServoPW(int index, int pw)
     if (pw < MIN_PW || pw > MAX_PW)
     {
 
-        char message[MESASGE_LENGTH];
+        char * message = new char[MESASGE_LENGTH];
         sprintf(message, "Pulse width not in range");
         fail(message);
+
+        delete[] message;
+        
     }
 
     char commandbuilder[COMMAND_SIZE];
@@ -230,9 +236,12 @@ void execute(char *command)
 
     if (sizeof(command) < 6)
     {
-        char message[MESASGE_LENGTH];
+        char *message = new char[MESASGE_LENGTH];
         sprintf(message, "Invalid command. Should be of size %d at least", 6);
         fail(message);
+
+        delete[] message;
+        
     }
     else
     {
@@ -242,6 +251,7 @@ void execute(char *command)
 
         system(execcommand);
     }
+
 }
 
 //helper methods
@@ -321,7 +331,7 @@ float radians(float degrees)
 int *getJointPositions(float x, float y, float z, float pitch_angle_d, float roll_angle_d)
 {
 
-    int *positions = malloc(sizeof(int) * 6);
+    int *positions = (int*) malloc(sizeof(int) * 6);
 
     float hum_sq;
     float uln_sq;
@@ -386,7 +396,7 @@ int *getJointPositions(float x, float y, float z, float pitch_angle_d, float rol
 
     // printf("\n Entering IK \n");
 
-    if (isnan(shl_angle_r) || isinf(shl_angle_r))
+    if (std::isnan(shl_angle_r) || std::isinf(shl_angle_r))
         return positions;
     float shl_angle_d = degrees(shl_angle_r);
 
@@ -397,7 +407,7 @@ int *getJointPositions(float x, float y, float z, float pitch_angle_d, float rol
 
     float elb_angle_r = acos((hum_sq + uln_sq - s_w) / (2 * A3 * A4));
     // If result is NAN or Infinity, the desired arm position is not possible
-    if (isnan(elb_angle_r) || isinf(elb_angle_r))
+    if (std::isnan(elb_angle_r) || std::isinf(elb_angle_r))
         return positions;
 
     float elb_angle_d = degrees(elb_angle_r);
@@ -505,7 +515,7 @@ void grasp(int d)
 
 int gotoPose(float x, float y, float z, float pitch, float roll)
 {
-    printf("Cartesian pose: \n  %f %f %f %f %f \n", x, y, z, pitch, roll);
+    // printf("Cartesian pose: \n  %f %f %f %f %f \n", x, y, z, pitch, roll);
 
     int *poss = getJointPositions(x, y, z, pitch, roll);
 
@@ -518,7 +528,7 @@ int gotoPose(float x, float y, float z, float pitch, float roll)
         executeCommand(3, poss[3], SPEED);
         executeCommand(4, poss[4], SPEED);
 
-        printf("Joint pos: \n %d %d %d %d %d \n", poss[0], poss[1],  poss[2], poss[3], poss[4]);
+        // printf("Joint pos: \n %d %d %d %d %d \n", poss[0], poss[1],  poss[2], poss[3], poss[4]);
         return 1;
     }
     else
