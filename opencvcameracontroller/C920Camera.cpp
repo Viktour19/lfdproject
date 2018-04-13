@@ -9,6 +9,7 @@
  */
 
 #include "C920Camera.h"
+#include <opencv2/video/tracker.hpp>
 
 namespace v4l2 {
 
@@ -72,9 +73,10 @@ bool C920Camera::RetrieveMat(cv::Mat &image) {
 		return false;
 	}
 	if (_img->origin == IPL_ORIGIN_TL)
-		cv::Mat(_img).copyTo(image);
+		image = cv::cvarrToMat(_img);
+		//cv::Mat(_img).copyTo(image);
 	else {
-		cv::Mat temp(_img);
+		cv::Mat temp = cv::cvarrToMat(_img);
 		cv::flip(temp, image, 0);
 	}
 	return true;

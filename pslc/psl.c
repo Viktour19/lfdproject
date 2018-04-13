@@ -266,63 +266,68 @@ void punish(int hypIndex, int value)
     }
 }
 
-int approxmatch(Event_t *a, Event_t *b)
+int hyp_approxmatch(Event_t *a, Event_t *b)
 {
-    int a_len = getEventSeqLen(a);
-    int b_len = getEventSeqLen(b);
 
-    char *a_ = (char *)calloc(5 * a_len, sizeof(char));
-    char *b_ = (char *)calloc(5 * b_len, sizeof(char));
+    CharList_t * _a = NULL;
+    CharList_t * _b = NULL;
+
+    _a = malloc(sizeof(CharList_t));
+    _b = malloc(sizeof(CharList_t));
 
     Event_t *current = a;
-    int i = 0;
 
     while (current != NULL)
     {
         if (current->eventtype == 1)
         {
-            a_[i++] = current->event.action.deltaX;
-            a_[i++] = current->event.action.deltaY;
-            a_[i++] = current->event.action.deltaZ;
-            a_[i++] = current->event.action.deltaangle;
-            a_[i++] = current->event.action.grasp;
+            
+            push_char_list(_a,  current->event.action.deltaX);
+            push_char_list(_a,  current->event.action.deltaY);
+            push_char_list(_a,  current->event.action.deltaZ);
+            push_char_list(_a,  current->event.action.deltaangle);
+            push_char_list(_a,  current->event.action.grasp);
+
         }
         else if (current->eventtype == 2)
         {
-            a_[i++] = current->event.observation.diffX;
-            a_[i++] = current->event.observation.diffY;
-            a_[i++] = current->event.observation.diffZ;
-            a_[i++] = current->event.observation.diffangle;
+            push_char_list(_a, current->event.observation.diffX);
+            push_char_list(_a, current->event.observation.diffY);
+            push_char_list(_a, current->event.observation.diffZ);
+            push_char_list(_a, current->event.observation.diffangle);
+
         }
 
         current = current->next;
     }
 
     current = b;
-    i = 0;
 
     while (current != NULL)
     {
         if (current->eventtype == 1)
         {
-            b_[i++] = current->event.action.deltaX;
-            b_[i++] = current->event.action.deltaY;
-            b_[i++] = current->event.action.deltaZ;
-            b_[i++] = current->event.action.deltaangle;
-            b_[i++] = current->event.action.grasp;
+            push_char_list(_b,  current->event.action.deltaX);
+            push_char_list(_b,  current->event.action.deltaY);
+            push_char_list(_b,  current->event.action.deltaZ);
+            push_char_list(_b,  current->event.action.deltaangle);
+            push_char_list(_b,  current->event.action.grasp);
+
         }
         else if (current->eventtype == 2)
         {
-            b_[i++] = current->event.observation.diffX;
-            b_[i++] = current->event.observation.diffY;
-            b_[i++] = current->event.observation.diffZ;
-            b_[i++] = current->event.observation.diffangle;
+            push_char_list(_b, current->event.observation.diffX);
+            push_char_list(_b, current->event.observation.diffY);
+            push_char_list(_b, current->event.observation.diffZ);
+            push_char_list(_b, current->event.observation.diffangle);
+
         }
 
         current = current->next;
     }
 
-    return exactmatch(a_, b_);
+    return approxmatch(_a, _b, 0, 0);
+    
 }
 
 double hypMatch(int hypIndex, Event_t *sequence)
@@ -340,7 +345,7 @@ double hypMatch(int hypIndex, Event_t *sequence)
 
         else
         {
-            int a = approxmatch(hypotheses[hypIndex].lhs, sequence);
+            int a = hyp_approxmatch(hypotheses[hypIndex].lhs, sequence);
             if (a == 0) //should have some heuristic
             {
                 double z = conf(hypIndex);
@@ -382,9 +387,7 @@ Hypothesis selectHyp(Event_t *seq)
 void getConfScores(Event_t *sequence, double hs[])
 {    
     if (hypothesisCount == 0)
-        return NULL;
-
-    // int scores[hypothesisCount];
+        return;
 
     for (int i = 0; i < hypothesisCount; i++)
     {
@@ -392,7 +395,6 @@ void getConfScores(Event_t *sequence, double hs[])
         hs[i] = a;
     }
 
-    // return scores;
 }
 
 void clearHypotheses()
@@ -637,7 +639,27 @@ int main()
 
     }
 
-    dynamicprogramming("cacd", "bcbacbbb", 1);
+    CharList_t * _a = NULL;
+    CharList_t * _b = NULL;
+
+    _a = malloc(sizeof(CharList_t));
+    _b = malloc(sizeof(CharList_t));
+
+    push_char_list(_a, 'c');
+    push_char_list(_a, 'a');    
+    push_char_list(_a, 'c');
+    push_char_list(_a, 'd');
+
+    push_char_list(_b, 'b');
+    push_char_list(_b, 'c');    
+    push_char_list(_b, 'b');
+    push_char_list(_b, 'a');
+    push_char_list(_b, 'c');
+    push_char_list(_b, 'b');
+    push_char_list(_b, 'b');
+    push_char_list(_b, 'b');    
+
+    dynamicprogramming(_a, _b, 0);
     
     return 0;
 

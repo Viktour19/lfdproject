@@ -12,6 +12,9 @@
 #define C920CAMERA_H_
 
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/opencv.hpp>
+#include <opencv2/core/ocl.hpp>
+
 
 #define CLEAR(x) memset (&(x), 0, sizeof (x))
 

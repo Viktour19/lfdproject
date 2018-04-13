@@ -3,6 +3,8 @@
 #include "controllerInterface.h"
 #include "appImplementation.h"
 
+struct timespec counter, start, pressKey, releaseKey;
+
 
 int main()
 {

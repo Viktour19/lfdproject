@@ -11,6 +11,7 @@
 
 #include "C920Camera.h"
 
+
 using namespace std;
 
 int Brightness = 128, Contrast = 128, Saturation = 128, Sharpness = 128, Gain = 0, Focus = 0, BacklightCompensation = 0,

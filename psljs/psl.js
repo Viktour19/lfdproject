@@ -155,9 +155,13 @@ Psl.prototype = {
 
 			var correct = maxh && maxh.rhs == t;
 			if (maxh && !correct) maxh.punish();
+			
 			var newh = undefined;
+			
 			if (!correct) {
+			
 				newh = this.grow(sub,bestCorrect || t); //psl learns only on failure
+			
 			}
 
 			if (callback) callback(i, maxh, maxh && maxh.rhs || '', correct, newh);	

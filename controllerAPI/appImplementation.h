@@ -7,8 +7,6 @@
 using namespace std;
 using namespace cv;
 
-struct timespec counter, start, pressKey, releaseKey;
-
 void prompt_and_exit(int status);
 
 float *getObjectPose(InputArray frame);

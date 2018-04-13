@@ -4,9 +4,16 @@
  *  Created on: Dec 31, 2014
  *      Author: jrparks
  *      Author: https://github.com/jrjparks
+ * 
+ * 	Extended for learning for demonstration project by
+ *  Victor Akinwande
+ * 	Feburary 2018
  */
 
 #include "Main.h"
+
+using namespace cv;
+using namespace std;
 
 int main(int argc, char* argv[]) {
 	setenv("DISPLAY", ":0", 0);
@@ -65,7 +72,13 @@ int main(int argc, char* argv[]) {
 	cv::createTrackbar("Focus", "Adjustments", &Focus, 256);
 
 	int wait_key = 0;
+
+	Ptr<Tracker> tracker;
+	tracker = TrackerMIL::create();
+	Rect2d bbox(287, 23, 86, 320);
+
 	while (true) {
+
 		camera.SetBrightness(Brightness);
 		camera.SetContrast(Contrast);
 		camera.SetSaturation(Saturation);
@@ -78,12 +91,24 @@ int main(int argc, char* argv[]) {
 		--Focus;
 		camera.SetFocus(Focus);
 		++Focus;
+		bool ok;
+		bool init;
 
 		if (camera.GrabFrame()) {
+
 			if (camera.RetrieveMat(frame))
+			{	
+				// if(!init){ init = true; tracker->init(frame, bbox);}
+				// if (ok) rectangle(frame, bbox, Scalar( 255, 0, 0 ), 2, 1 );
+				// else ok = tracker->update(frame, bbox);
+
 				cv::imshow("Camera", frame);
+			}
+
 		} else {
+
 			fprintf(stderr, "Unable to grab frame from camera.\n");
+		
 		}
 
 		camera2.SetBrightness(Brightness);
