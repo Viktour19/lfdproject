@@ -112,7 +112,12 @@ void print_list(Event_t *head)
     while (current != NULL)
     {
 
-        printf("%d\n", current->eventtype);
+        
+        if (current->eventtype == 1)
+            printf("%c %d %d %d %d \n", current->event.action.deltaX, current->event.action.deltaY, current->event.action.deltaZ, current->event.action.deltaangle, current->event.action.grasp );
+        else
+            printf("%c %d %d %d \n", current->event.observation.diffX, current->event.observation.diffY, current->event.observation.diffZ, current->event.observation.diffangle); 
+
         current = current->next;
     }
 }
@@ -632,11 +637,11 @@ int main()
 
     push(events_, e_, 1);
 
-    for(int i = 0; i< 3; i++)
+    for(int i = 0; i< 7; i++)
     {
         Event_t * pred =  predict(events_);
         push(events_, pred->event, pred->eventtype);
-
+        print_list(pred);
     }
 
     CharList_t * _a = NULL;
