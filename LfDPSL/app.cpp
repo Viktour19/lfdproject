@@ -1,7 +1,7 @@
 //controller.cpp
 
-#include "controllerInterface.h"
-#include "appImplementation.h"
+#include "app/controllerInterface.h"
+#include "app/appImplementation.h"
 
 struct timespec counter, start, pressKey, releaseKey;
 
@@ -299,7 +299,7 @@ int main()
     int max_y = 240;
     int min_x = -90;
     int max_x = 75;
-    FILE *f = fopen("calibrationdata.txt", "w");
+    FILE *f = fopen("data/calibrationdata.txt", "w");
 
     if (f == NULL)
     {
