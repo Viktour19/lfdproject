@@ -1,16 +1,16 @@
 CC = g++
 CFLAGS = -pedantic -Wall -g -I../.. -I/usr/local/include 
-LDFLAGS = -L../.. -L/usr/local/lib -lspnav -lX11 controller/controllerInterface.cpp psl/pslImplementation.cpp app/appImplementation.cpp -lm
+LDFLAGS = -L../.. -L/usr/local/lib -lspnav -lX11 controller/controllerInterface.cpp psl/pslImplementation.cpp psl/approxmatch.cpp app/appImplementation.cpp -lm
 
 OPENCV = `pkg-config opencv --cflags --libs`
 LIBS = $(OPENCV)
 
 .PHONY: all
-all: app
+all: main
 
-app: app.cpp
+main: app.cpp
 	$(CC) $(CFLAGS) -DBUILD_AF_UNIX -o $@ $< $(LDFLAGS) $(LIBS)
 
 .PHONY: clean
 clean:
-	rm -f app
+	rm -f main

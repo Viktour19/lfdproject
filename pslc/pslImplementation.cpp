@@ -1,5 +1,8 @@
 #include "pslImplementation.h"
 
+int hypothesisCount = 0;
+Hypothesis hypotheses[MAXHYP];
+
 void init()
 {
     //initialize the hypotheses library.

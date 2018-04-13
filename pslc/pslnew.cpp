@@ -1,8 +1,8 @@
 
 #include "pslImplementation.h"
+// #include "approxmatch.h"
 
-
-int main()
+int main(void)
 {
 
     Event_t * events = NULL;
@@ -120,6 +120,8 @@ int main()
     {
         Event_t * pred =  predict(events_);
         push(events_, pred->event, pred->eventtype);
+        print_list(pred);
+        
 
     }
 

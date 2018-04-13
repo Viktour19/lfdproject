@@ -66,8 +66,6 @@ typedef struct
 
 } Hypothesis;
 
-int hypothesisCount = 0;
-Hypothesis hypotheses[MAXHYP];
 
 void init();
 

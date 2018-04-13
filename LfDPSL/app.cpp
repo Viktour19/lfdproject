@@ -1,6 +1,6 @@
 //controller.cpp
 
-#include "app/controllerInterface.h"
+#include "controller/controllerInterface.h"
 #include "app/appImplementation.h"
 
 struct timespec counter, start, pressKey, releaseKey;
