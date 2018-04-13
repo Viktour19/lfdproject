@@ -88,8 +88,8 @@ int exactmatch(CharList_t * pattern, CharList_t * text)
     
     if(psz != tsz ) return -1;
 
-    char p[psz];
-    char t[tsz];
+    char * p = new char[psz];
+    char * t = new char[tsz];
 
     int i = 0;
 
@@ -100,6 +100,8 @@ int exactmatch(CharList_t * pattern, CharList_t * text)
         p_current = p_current->next;
     }
 
+    p[i++] = '\0';
+
     i = 0;
 
     while (t_current != NULL) {
@@ -108,6 +110,8 @@ int exactmatch(CharList_t * pattern, CharList_t * text)
 
         t_current = t_current->next;
     }
+
+    t[i++] = '\0';    
 
     int a = strcmp(p, t);
 

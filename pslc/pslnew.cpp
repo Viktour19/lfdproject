@@ -102,6 +102,7 @@ int main(void)
     
     train(events, 0, getEventSeqLen(events) - 1);
 
+    print_hypotheses();
 
     Event_t * events_ = NULL;
     events_  =  (Event_t *) malloc(sizeof(Event_t));
@@ -116,14 +117,15 @@ int main(void)
 
     push(events_, e_, 1);
 
-    for(int i = 0; i< 3; i++)
+    for(int i = 0; i< 6; i++)
     {
         Event_t * pred =  predict(events_);
         push(events_, pred->event, pred->eventtype);
-        print_list(pred);
-        
-
+    
     }
+
+    print_list(events_);
+    
 
     CharList_t * _a = NULL;
     CharList_t * _b = NULL;
@@ -145,7 +147,7 @@ int main(void)
     push_char_list(_b, 'b');
     push_char_list(_b, 'b');    
 
-    dynamicprogramming(_a, _b, 0);
+    // dynamicprogramming(_a, _b, 0);
     
     return 0;
 

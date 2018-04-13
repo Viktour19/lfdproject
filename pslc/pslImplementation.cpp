@@ -45,7 +45,11 @@ void print_list(Event_t *head)
     while (current != NULL)
     {
 
-        printf("%d\n", current->eventtype);
+        if (current->eventtype == 1)
+            printf("%c %d %d %d %d \n", current->event.action.deltaX, current->event.action.deltaY, current->event.action.deltaZ, current->event.action.deltaangle, current->event.action.grasp );
+        else
+            printf("%c %d %d %d \n", current->event.observation.diffX, current->event.observation.diffY, current->event.observation.diffZ, current->event.observation.diffangle); 
+
         current = current->next;
     }
 }
@@ -220,6 +224,7 @@ int hyp_approxmatch(Event_t *a, Event_t *b)
             push_char_list(_a,  current->event.action.deltaZ);
             push_char_list(_a,  current->event.action.deltaangle);
             push_char_list(_a,  current->event.action.grasp);
+            // push_char_list(_a,  '1');
 
         }
         else if (current->eventtype == 2)
@@ -228,6 +233,8 @@ int hyp_approxmatch(Event_t *a, Event_t *b)
             push_char_list(_a, current->event.observation.diffY);
             push_char_list(_a, current->event.observation.diffZ);
             push_char_list(_a, current->event.observation.diffangle);
+            // push_char_list(_a,  '2');
+            
 
         }
 
@@ -245,6 +252,7 @@ int hyp_approxmatch(Event_t *a, Event_t *b)
             push_char_list(_b,  current->event.action.deltaZ);
             push_char_list(_b,  current->event.action.deltaangle);
             push_char_list(_b,  current->event.action.grasp);
+            // push_char_list(_b,  '1');            
 
         }
         else if (current->eventtype == 2)
@@ -253,6 +261,7 @@ int hyp_approxmatch(Event_t *a, Event_t *b)
             push_char_list(_b, current->event.observation.diffY);
             push_char_list(_b, current->event.observation.diffZ);
             push_char_list(_b, current->event.observation.diffangle);
+            // push_char_list(_b,  '2');            
 
         }
 
@@ -273,34 +282,56 @@ double hypMatch(int hypIndex, Event_t *sequence)
 
     if (sequence)
     {
-        if (seqlen == 0 || seqlen > hypLhsLen)
-            return conf(hypIndex);
+        int diff = hypLhsLen - seqlen;
 
-        else
+        if(hypLhsLen == 0)
+            return conf(hypIndex);
+        
+        else if(seqlen < hypLhsLen)
         {
-            int a = hyp_approxmatch(hypotheses[hypIndex].lhs, sequence);
-            if (a == 0) //should have some heuristic
-            {
-                double z = conf(hypIndex);
-                z = z / seqlen * hypLhsLen;
-                return z;
-            }
+                Event_t * sub = NULL;
+                sub = (Event_t *) malloc(sizeof(Event_t));
+                
+                sub = subsequence(hypotheses[hypIndex].lhs, diff, hypLhsLen );
+
+                if(hyp_approxmatch(sub , sequence) == 0){
+
+                    double z = conf(hypIndex);
+                    z = z / seqlen * hypLhsLen;
+                    return z;
+                }
+                
         }
+        
+        else {
+
+             Event_t * sub = NULL;
+             sub = (Event_t *) malloc(sizeof(Event_t));
+
+             sub = subsequence(sequence, seqlen - hypLhsLen, seqlen );
+
+             if(hyp_approxmatch(sub, hypotheses[hypIndex].lhs) == 0)
+                return conf(hypIndex);
+             else return 0.0;
+
+        }
+
     }
 
     else
-        return 0;
+        return 0.0;
 
-    return 0;
+    return 0.0;
 }
 
 Hypothesis selectHyp(Event_t *seq)
 {
-    double scores [hypothesisCount];
+    double * scores = new double[hypothesisCount];
     
     for (int i = 0; i < hypothesisCount; i++)
     {
-        scores[i] = hypMatch(i, seq);
+        double score = hypMatch(i, seq);
+        scores[i] = score;
     }
     int max = 0;
     int index = 0;
@@ -313,6 +344,8 @@ Hypothesis selectHyp(Event_t *seq)
         }
     }
     Hypothesis nullHyp = newHyp();
+
+    if(scores[index] > 0.0) printf("| %d | \n", index);
 
     return scores[index] > 0.0 ? hypotheses[index] : nullHyp;
 }
@@ -451,4 +484,22 @@ Event_t *predict(Event_t *seq)
     return h.rhs;
 }
 
+
+void print_hypotheses()
+{
+    for(int i=0; i< MAXHYP; i++)
+    {
+        Hypothesis hyp = hypotheses[i];
+        if(hyp.id == -1) break;
+
+        print_list(hyp.lhs);
+
+        printf("%s\n", "->");
+
+        print_list(hyp.rhs);
+
+        printf("%s\n", ":");
+        
+    }
+}
 

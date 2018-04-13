@@ -111,5 +111,7 @@ void train(Event_t *sequence, int startIndex, int stopIndex);
 
 Event_t *predict(Event_t *seq);
 
+void print_hypotheses();
+
 
 
