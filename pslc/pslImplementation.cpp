@@ -421,18 +421,18 @@ void train(Event_t *sequence, int startIndex, int stopIndex)
         Event_t * sub = subsequence(sequence, 0, i);
         Event_t * t = subsequence(sequence, i, i+1);
 
-        double hs [hypothesisCount];
+        double * hs = new double[hypothesisCount];
 
         getConfScores(sub, hs); //gets a confidence score for every hypothesis
 
-        int hs_sz =  hs_sz = sizeof(hs) / sizeof(double);
+        int hs_sz = sizeof(hs) / sizeof(double);
 
         Hypothesis maxh = newHyp();
         
         double maxc = -1.0;
         Hypothesis bestCorrect = newHyp();
  
-        for (int j = 0; j < hs_sz; j++)
+        for (int j = 0; j < hypothesisCount; j++)
         {
             double conf = hs[j];
 

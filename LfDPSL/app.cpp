@@ -62,7 +62,7 @@ int main()
 
     printf("\n %s \n", "Commence demonstration");
 
-    FILE *training_file = fopen("trainingdata.txt", "w");
+    FILE *training_file = fopen("data/trainingdata.txt", "w");
 
     if (training_file == NULL)
     {
